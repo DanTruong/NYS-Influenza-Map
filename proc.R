@@ -66,6 +66,10 @@ flu.data <- flu.data %>%
 flu.data$Latitude <- substring(flu.data$Latitude, first = 2)
 flu.data$Longitude <- substring(flu.data$Longitude, 1, nchar(flu.data$Longitude) - 1)
 
+## Convert coordinates from character to double
+flu.data$Latitude <- as.double(flu.data$Latitude)
+flu.data$Longitude <- as.double(flu.data$Longitude)
+
 ####### CODEBOOK GENERATION ########
 
 ## Uncomment to create codebook of flu data
@@ -106,25 +110,29 @@ ui <- fluidPage(
   ),
   
   ## Table output of selected values for flu data
-  tableOutput("dTable")
+  #tableOutput("dTable")
   
   ## Map output
-  #leafletOutput(outputId = "nysMap")
+  leafletOutput(outputId = "nysMap")
 )
 
 server <- function(input, output){
   ## Create table of flu data based on user selection
-  output$dTable <- renderTable(
-    flu.data[flu.data$Season == trimws(input$seasonVal) & 
-               flu.data$Year == as.integer(input$yearVal) & 
-               flu.data$Disease == trimws(input$diseaseVal), ]
-  )
+  #output$dTable <- renderTable(
+  #  flu.data[flu.data$Season == trimws(input$seasonVal) & 
+  #             flu.data$Year == as.integer(input$yearVal) & 
+  #             flu.data$Disease == trimws(input$diseaseVal), ]
+  #)
   
-  #output$nysMap <- renderLeaflet({
-  #  leaflet() %>%
-  #    setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
-  #    addTiles()
-  #})
+  output$nysMap <- renderLeaflet({
+    leaflet() %>%
+      setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
+      addTiles() %>%
+      addCircles(data = flu.data, 
+                 lng = flu.data$Longitude,
+                 lat = flu.data$Latitude,
+                 radius = flu.data$Count * 25)
+  })
 }
 
 shinyApp(ui = ui, server = server)
