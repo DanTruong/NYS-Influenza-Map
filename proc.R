@@ -54,12 +54,20 @@ flu.data$Disease <- revalue(flu.data$Disease, c("INFLUENZA_A"="A",
                                                 "INFLUENZA_UNSPECIFIED"="Unspecified"))
 
 ## Change Disease var to Influenza.Type
-colnames(flu.data)[colnames(flu.data)=="Disease"] <- "Influenza.Type"
+#colnames(flu.data)[colnames(flu.data)=="Disease"] <- "Influenza.Type"
 
 ## Rename season value types
 flu.data$Season <- revalue(flu.data$Season, c("autumm"="Fall", 
                                                 "winter"="Winter", 
                                                 "spring"="Spring"))
+
+## Split County.Centroid into separate Latitude/Longitude variables
+flu.data <- flu.data %>%
+  separate(County.Centroid, c("Latitude", "Longitude"), ", ")
+
+## Remove the parentheses from both values
+flu.data$Latitude <- substring(flu.data$Latitude, first = 2)
+flu.data$Longitude <- substring(flu.data$Longitude, 1, nchar(flu.data$Longitude) - 1)
 
 ####### CODEBOOK GENERATION ########
 
@@ -69,9 +77,10 @@ flu.data$Season <- revalue(flu.data$Season, c("autumm"="Fall",
 #attr(flu.data$Month, "shortDescription") <- "Month of occurrence recording"
 #attr(flu.data$Day, "shortDescription") <- "Day of occurrence recording"
 #attr(flu.data$Year, "shortDescription") <- "Year of occurrence recording"
-#attr(flu.data$Influenza.Type, "shortDescription") <- "Distinction of Influenza Type A, B or Unspecified"
+#attr(flu.data$Disease, "shortDescription") <- "Distinction of Influenza Type A, B or Unspecified"
 #attr(flu.data$Count, "shortDescription") <- "Amount of flu occurrences"
-#attr(flu.data$County.Centroid, "shortDescription") <- "Latitude/Longitude Coordinates of the County where the data was recorded"
+#attr(flu.data$Latitude, "shortDescription") <- "Latitude Coordinates of the County where the data was recorded"
+#attr(flu.data$Longitude, "shortDescription") <- "Longitude Coordinates of the County where the data was recorded"
 #attr(flu.data$Season, "shortDescription") <- "The season for which the flu data was recorded"
 #makeCodebook(flu.data)
 
@@ -94,7 +103,7 @@ ui <- fluidPage(
   ## Flu type selector
   selectInput(inputId = "diseaseVal",
               label = "Influenza Type", 
-              unique(flu.data$Influenza.Type)
+              unique(flu.data$Disease)
               ),
   
   ## Season selector
@@ -104,25 +113,25 @@ ui <- fluidPage(
   ),
   
   ## Table output of selected values for flu data
-  #tableOutput("dTable"),
+  tableOutput("dTable"),
   
   ## Map output
-  leafletOutput(outputId = "nysMap")
+  #leafletOutput(outputId = "nysMap")
 )
 
 server <- function(input, output){
   ## Create table of flu data based on user selection
-  #output$dTable <- renderTable(
-  #  flu.data[flu.data$Season == trimws(input$seasonVal) & 
-  #             flu.data$Year == as.integer(input$yearVal) & 
-  #             flu.data$Influenza.Type == trimws(input$diseaseVal), ]
-  #)
+  output$dTable <- renderTable(
+    flu.data[flu.data$Season == trimws(input$seasonVal) & 
+               flu.data$Year == as.integer(input$yearVal) & 
+               flu.data$Disease == trimws(input$diseaseVal), ]
+  )
   
-  output$nysMap <- renderLeaflet({
-    leaflet() %>%
-      setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
-      addTiles()
-  })
+  #output$nysMap <- renderLeaflet({
+  #  leaflet() %>%
+  #    setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
+  #    addTiles()
+  #})
 }
 
 shinyApp(ui = ui, server = server)
