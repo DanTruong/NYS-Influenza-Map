@@ -53,9 +53,6 @@ flu.data$Disease <- revalue(flu.data$Disease, c("INFLUENZA_A"="A",
                                                 "INFLUENZA_B"="B", 
                                                 "INFLUENZA_UNSPECIFIED"="Unspecified"))
 
-## Change Disease var to Influenza.Type
-#colnames(flu.data)[colnames(flu.data)=="Disease"] <- "Influenza.Type"
-
 ## Rename season value types
 flu.data$Season <- revalue(flu.data$Season, c("autumm"="Fall", 
                                                 "winter"="Winter", 
@@ -89,31 +86,27 @@ ui <- fluidPage(
   
   ## Application title
   titlePanel("Map of Influenza Incidents in NYS 2009 - 2019"),
-  
-  ## Year selection slider
-  sliderInput(inputId = "yearVal",
-              label = "Year",
-              min = min(flu.data$Year),
-              max = max(flu.data$Year),
-              value = min(flu.data$Year),
-              round = TRUE,
-              ticks = FALSE
-              ),
+
+  ## Year selector
+  selectInput(inputId = "yearVal",
+              label = "Year", 
+              sort(unique(flu.data$Year))
+  ),
   
   ## Flu type selector
   selectInput(inputId = "diseaseVal",
               label = "Influenza Type", 
-              unique(flu.data$Disease)
+              sort(unique(flu.data$Disease))
               ),
   
   ## Season selector
   selectInput(inputId = "seasonVal",
               label = "Season", 
-              unique(flu.data$Season)
+              sort(unique(flu.data$Season))
   ),
   
   ## Table output of selected values for flu data
-  tableOutput("dTable"),
+  tableOutput("dTable")
   
   ## Map output
   #leafletOutput(outputId = "nysMap")
