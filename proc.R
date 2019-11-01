@@ -131,7 +131,9 @@ server <- function(input, output){
       addCircles(data = flu.data, 
                  lng = flu.data$Longitude,
                  lat = flu.data$Latitude,
-                 radius = flu.data$Count * 25)
+                 radius = flu.data$Count[flu.data$Season == trimws(input$seasonVal) &
+                                           flu.data$Year == as.integer(input$yearVal) & 
+                                           flu.data$Disease == trimws(input$diseaseVal)] * 25)
   })
 }
 
