@@ -10,6 +10,8 @@
 #install.packages("shiny")
 #install.packages("dataMaid")
 #install.packages("rmarkdown")
+#install.packages("leaflet")
+#install.packages("leaflet.extras")
 
 library(tidyr)
 library(plyr)
@@ -19,6 +21,8 @@ library(hydroTSM)
 library(shiny)
 library(dataMaid)
 library(rmarkdown)
+library(leaflet)
+library(leaflet.extras)
 
 ## Read in Data Set
 flu.data.raw <- read.csv("Influenza_Laboratory-Confirmed_Cases_By_County__Beginning_2009-10_Season.csv")
@@ -100,16 +104,25 @@ ui <- fluidPage(
   ),
   
   ## Table output of selected values for flu data
-  tableOutput("dTable")
+  #tableOutput("dTable"),
+  
+  ## Map output
+  leafletOutput(outputId = "nysMap")
 )
 
 server <- function(input, output){
   ## Create table of flu data based on user selection
-  output$dTable <- renderTable(
-    flu.data[flu.data$Season == trimws(input$seasonVal) & 
-               flu.data$Year == as.integer(input$yearVal) & 
-               flu.data$Influenza.Type == trimws(input$diseaseVal), ]
-  )
+  #output$dTable <- renderTable(
+  #  flu.data[flu.data$Season == trimws(input$seasonVal) & 
+  #             flu.data$Year == as.integer(input$yearVal) & 
+  #             flu.data$Influenza.Type == trimws(input$diseaseVal), ]
+  #)
+  
+  output$nysMap <- renderLeaflet({
+    leaflet() %>%
+      setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
+      addTiles()
+  })
 }
 
 shinyApp(ui = ui, server = server)
