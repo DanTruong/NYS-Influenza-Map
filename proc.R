@@ -121,32 +121,26 @@ ui <- fluidPage(
               label = "Season", 
               sort(unique(flu.data$Season))
   ),
+
+  ## Map output
+  leafletOutput(outputId = "nysMap"),
   
   ## Table output of selected values for flu data
-  #tableOutput("dTable")
-  
-  ## Map output
-  leafletOutput(outputId = "nysMap")
+  tableOutput("dTable")
 )
 
 server <- function(input, output){
   ## Create table of flu data based on user selection
-  #output$dTable <- renderTable(
-  #  flu.data[flu.data$Season == trimws(input$seasonVal) & 
-  #             flu.data$Year == as.integer(input$yearVal) & 
-  #             flu.data$Disease == trimws(input$diseaseVal), ]
-  #)
+  output$dTable <- renderTable(
+    flu.data.final[flu.data.final$Season == trimws(input$seasonVal) & 
+               flu.data.final$Year == as.integer(input$yearVal) & 
+               flu.data.final$Disease == trimws(input$diseaseVal), ]
+  )
   
   output$nysMap <- renderLeaflet({
     leaflet() %>%
       setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
       addTiles() %>%
-      #addCircles(data = flu.data, 
-      #           lng = flu.data$Longitude,
-      #           lat = flu.data$Latitude,
-      #           radius = flu.data$Count[flu.data$Season == trimws(input$seasonVal) &
-      #                                     flu.data$Year == as.integer(input$yearVal) & 
-      #                                     flu.data$Disease == trimws(input$diseaseVal)] * 25)
       addCircles(data = flu.data.final, 
                   lng = flu.data.final$Longitude,
                   lat = flu.data.final$Latitude,
