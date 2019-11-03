@@ -70,6 +70,19 @@ flu.data$Longitude <- substring(flu.data$Longitude, 1, nchar(flu.data$Longitude)
 flu.data$Latitude <- as.double(flu.data$Latitude)
 flu.data$Longitude <- as.double(flu.data$Longitude)
 
+
+
+flu.data <- within(flu.data, rm(Month))
+flu.data <- within(flu.data, rm(Day))
+flu.data <- within(flu.data, rm(Region))
+#aggregate(flu.data$Count, by=flu.data$Year, FUN=sum)
+#coordinates <- data.frame(County=flu.data$County, Latitude=flu.data$Latitude, Longitude=flu.data$Longitude)
+#flu.data <- within(flu.data, rm(Latitude))
+#flu.data <- within(flu.data, rm(Longitude))
+#coordinates <- unique(coordinates)
+
+flu.data.final <- aggregate(Count ~ ., flu.data, sum)
+
 ####### CODEBOOK GENERATION ########
 
 ## Uncomment to create codebook of flu data
@@ -128,12 +141,18 @@ server <- function(input, output){
     leaflet() %>%
       setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
       addTiles() %>%
-      addCircles(data = flu.data, 
-                 lng = flu.data$Longitude,
-                 lat = flu.data$Latitude,
-                 radius = flu.data$Count[flu.data$Season == trimws(input$seasonVal) &
-                                           flu.data$Year == as.integer(input$yearVal) & 
-                                           flu.data$Disease == trimws(input$diseaseVal)] * 25)
+      #addCircles(data = flu.data, 
+      #           lng = flu.data$Longitude,
+      #           lat = flu.data$Latitude,
+      #           radius = flu.data$Count[flu.data$Season == trimws(input$seasonVal) &
+      #                                     flu.data$Year == as.integer(input$yearVal) & 
+      #                                     flu.data$Disease == trimws(input$diseaseVal)] * 25)
+      addCircles(data = flu.data.final, 
+                  lng = flu.data.final$Longitude,
+                  lat = flu.data.final$Latitude,
+                  radius = flu.data.final$Count[flu.data.final$Season == trimws(input$seasonVal) &
+                                               flu.data.final$Year == as.integer(input$yearVal) & 
+                                               flu.data.final$Disease == trimws(input$diseaseVal)] * 10)
   })
 }
 
