@@ -14,16 +14,16 @@ fluDataRaw <- read.csv("data.csv")
 
 ## Pull in select columns from raw
 fluData <- data.frame(County = fluDataRaw$County, 
-                      Date = as.Date(fluDataRaw$Week.Ending.Date, "%m/%d/%Y"),
+                      Date = fluDataRaw$Week.Ending.Date,
                       Disease = fluDataRaw$Disease,
                       Count = as.integer(fluDataRaw$Count),                 
                       Coordinates = fluDataRaw$County.Centroid)
 
 ## Create weather season variable
-fluData$Season <- time2season(fluData$Date, out.fmt = "seasons")
-fluData$Season <- revalue(fluData$Season, c("autumm" = "Fall", 
-                                            "winter" = "Winter", 
-                                            "spring" = "Spring"))
+#fluData$Season <- time2season(fluData$Date, out.fmt = "seasons")
+#fluData$Season <- revalue(fluData$Season, c("autumm" = "Fall", 
+#                                            "winter" = "Winter", 
+#                                            "spring" = "Spring"))
 
 ## Split coordinates into Longitude/Latitude (Double)
 fluData <- fluData %>%
@@ -36,7 +36,7 @@ fluData$Longitude <- as.double(fluData$Longitude)
 
 ## Separate date into Year, Month and Day (integers)
 fluData <- fluData %>%
-    separate(Date, sep = "-", into = c("Year", "Month", "Day"))
+    separate(Date, sep = "/", into = c("Month", "Day", "Year"))
 fluData$Month <- as.integer(fluData$Month)
 fluData$Day <- as.integer(fluData$Day)
 fluData$Year <- as.integer(fluData$Year)
@@ -47,8 +47,8 @@ fluData$Disease <- revalue(fluData$Disease, c("INFLUENZA_A" = "A",
                                               "INFLUENZA_UNSPECIFIED" = "Unspecified"))
 
 ## Work with consolidated data
-fluDataAbbrv <- fluData[-c(3, 4)]
-fluDataAbbrv <- aggregate(Count ~ ., fluDataAbbrv, sum)
+fluDataCons <- fluData[-c(3)]
+fluDataCons  <- aggregate(Count ~ ., fluDataCons, sum)
 
 ####### SHINY INIT CODE #############
 
@@ -66,19 +66,21 @@ ui <- fluidPage(
             ## Input for year selection
             selectInput(inputId = "yearVal",
                         label = "Year", 
-                        sort(unique(fluDataAbbrv$Year))
+                        sort(unique(fluDataCons$Year))
+            ),
+            
+            ## Input for month selection
+            selectInput(inputId = "monthVal",
+                        label = "Month", 
+                        sort(unique(fluDataCons$Month))
             ),
             
             ## Input for flu type selection
             selectInput(inputId = "diseaseVal",
                         label = "Influenza Type", 
-                        sort(unique(fluDataAbbrv$Disease))
+                        sort(unique(fluDataCons$Disease))
             ),
-            
-            selectInput(inputId = "seasonVal",
-                        label = "Season", 
-                        sort(unique(fluDataAbbrv$Season))
-            )
+        
         ),
 
         ## Display map and table (debug) in the main area (to the right)
@@ -94,7 +96,7 @@ server <- function(input, output, session) {
     
     ## Render map on the interface
     output$nysMap <- renderLeaflet({
-        leaflet(fluDataAbbrv) %>%
+        leaflet() %>%
             
             ## Set default map view over Syracuse, NY
             setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
@@ -102,10 +104,10 @@ server <- function(input, output, session) {
             
             ## Add magnitude circles based on user interface values
             addCircles(
-                data = fluDataAbbrv[
-                    fluDataAbbrv$Season == trimws(input$seasonVal) & 
-                    fluDataAbbrv$Year == as.integer(input$yearVal) & 
-                    fluDataAbbrv$Disease == trimws(input$diseaseVal),
+                data = fluDataCons[
+                    fluDataCons$Year == as.integer(input$yearVal) & 
+                    fluDataCons$Month == as.integer(input$monthVal) & 
+                    fluDataCons$Disease == trimws(input$diseaseVal),
                 ],
                 lat = ~ Latitude,
                 lng = ~ Longitude,
@@ -116,13 +118,13 @@ server <- function(input, output, session) {
     
     ## Render table for value debugging
     output$dTable <- renderTable(
-        fluDataAbbrv[
-            fluDataAbbrv$Season == trimws(input$seasonVal) & 
-            fluDataAbbrv$Year == as.integer(input$yearVal) & 
-            fluDataAbbrv$Disease == trimws(input$diseaseVal),
+        fluDataCons[
+            fluDataCons$Month == as.integer(input$monthVal) & 
+            fluDataCons$Year == as.integer(input$yearVal) & 
+            fluDataCons$Disease == trimws(input$diseaseVal),
         ]
     )
 }
 
-# Run the application 
+## Run the application 
 shinyApp(ui = ui, server = server)
