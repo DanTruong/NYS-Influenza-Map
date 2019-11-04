@@ -90,11 +90,11 @@ ui <- fluidPage(
 )
 
 # Define server logic
-server <- function(input, output) {
+server <- function(input, output, session) {
     
     ## Render map on the interface
     output$nysMap <- renderLeaflet({
-        leaflet() %>%
+        leaflet(fluDataAbbrv) %>%
             
             ## Set default map view over Syracuse, NY
             setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
@@ -102,14 +102,15 @@ server <- function(input, output) {
             
             ## Add magnitude circles based on user interface values
             addCircles(
-                data = fluDataAbbrv,
-                lng = fluDataAbbrv$Longitude,
-                lat = fluDataAbbrv$Latitude,
-                radius = fluDataAbbrv$Count[
-                    fluDataAbbrv$Season == trimws(input$seasonVal) &
+                data = fluDataAbbrv[
+                    fluDataAbbrv$Season == trimws(input$seasonVal) & 
                     fluDataAbbrv$Year == as.integer(input$yearVal) & 
-                    fluDataAbbrv$Disease == trimws(input$diseaseVal)
-                    ] * 10
+                    fluDataAbbrv$Disease == trimws(input$diseaseVal),
+                ],
+                lat = ~ Latitude,
+                lng = ~ Longitude,
+                radius = ~ Count * 25,
+                popup = ~ as.character(Count)
             )
     })
     
