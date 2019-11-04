@@ -16,14 +16,8 @@ fluDataRaw <- read.csv("data.csv")
 fluData <- data.frame(County = fluDataRaw$County, 
                       Date = fluDataRaw$Week.Ending.Date,
                       Disease = fluDataRaw$Disease,
-                      Count = as.integer(fluDataRaw$Count),                 
+                      Incidents = as.integer(fluDataRaw$Count),                 
                       Coordinates = fluDataRaw$County.Centroid)
-
-## Create weather season variable
-#fluData$Season <- time2season(fluData$Date, out.fmt = "seasons")
-#fluData$Season <- revalue(fluData$Season, c("autumm" = "Fall", 
-#                                            "winter" = "Winter", 
-#                                            "spring" = "Spring"))
 
 ## Split coordinates into Longitude/Latitude (Double)
 fluData <- fluData %>%
@@ -48,14 +42,14 @@ fluData$Disease <- revalue(fluData$Disease, c("INFLUENZA_A" = "A",
 
 ## Work with consolidated data
 fluDataCons <- fluData[-c(3)]
-fluDataCons  <- aggregate(Count ~ ., fluDataCons, sum)
+fluDataCons  <- aggregate(Incidents ~ ., fluDataCons, sum)
 
 ####### SHINY INIT CODE #############
 
 ui <- fluidPage(
 
     ## Application title
-    titlePanel("Map of Influenza Incidents in NYS 2009 - 2019"),
+    titlePanel("Map of Influenza Incidents in NYS 2010 - 2019"),
 
     ## Define UI with controls for left-side dominance
     sidebarLayout(
@@ -66,7 +60,7 @@ ui <- fluidPage(
             ## Input for year selection
             selectInput(inputId = "yearVal",
                         label = "Year", 
-                        sort(unique(fluDataCons$Year))
+                        2010:2019
             ),
             
             ## Input for month selection
@@ -85,8 +79,7 @@ ui <- fluidPage(
 
         ## Display map and table (debug) in the main area (to the right)
         mainPanel(
-            leafletOutput(outputId = "nysMap"),
-            tableOutput("dTable")
+            leafletOutput(outputId = "nysMap")
         )
     )
 )
@@ -99,7 +92,7 @@ server <- function(input, output, session) {
         leaflet() %>%
             
             ## Set default map view over Syracuse, NY
-            setView(lng = -76.1474, lat = 43.0481, zoom = 7) %>%
+            setView(lng = -73.97401, lat = 42.58827, zoom = 6) %>%
             addTiles() %>%
             
             ## Add magnitude circles based on user interface values
@@ -111,19 +104,11 @@ server <- function(input, output, session) {
                 ],
                 lat = ~ Latitude,
                 lng = ~ Longitude,
-                radius = ~ Count * 25,
-                popup = ~ as.character(Count)
+                radius = ~ Incidents * 50,
+                popup = ~ as.character(paste0(County, " County: ", Incidents, " Flu Cases")),
+                label = ~ as.character(paste0(County, " County: ", Incidents, " Flu Cases"))
             )
     })
-    
-    ## Render table for value debugging
-    output$dTable <- renderTable(
-        fluDataCons[
-            fluDataCons$Month == as.integer(input$monthVal) & 
-            fluDataCons$Year == as.integer(input$yearVal) & 
-            fluDataCons$Disease == trimws(input$diseaseVal),
-        ]
-    )
 }
 
 ## Run the application 
