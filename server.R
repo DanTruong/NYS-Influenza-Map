@@ -31,6 +31,7 @@ server <- function(input, output, session) {
         lat = ~Latitude,
         lng = ~Longitude,
         radius = ~ Incidents * 50,
+        color = 'red',
         popup = ~ as.character(paste0(
           County,
           " County: ",
