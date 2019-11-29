@@ -1,0 +1,12 @@
+name: NYS-Influenza-Map
+title: NYS-Influenza-Map
+username:
+account: dantruong
+server: shinyapps.io
+hostUrl: https://api.shinyapps.io/v1
+appId: 1409798
+bundleId: 2627220
+url: https://dantruong.shinyapps.io/NYS-Influenza-Map/
+when: 1575061625.32488
+asMultiple: FALSE
+asStatic: FALSE
