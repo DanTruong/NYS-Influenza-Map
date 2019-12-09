@@ -28,13 +28,19 @@ server <- function(input, output, session) {
         #  fluDataCons$Month == as.integer(input$monthVal) &
         #  fluDataCons$Disease == trimws(input$diseaseVal),
         #],
-        data = fluData[
-          fluData$Season == input$seasonVal &
-          fluData$Week == input$weekVal,
-        ],
+        #data = fluData[
+        #  fluData$Season == input$seasonVal &
+        #  fluData$Week == input$weekVal,
+        #],
+        data = aggregate(. ~ County + Latitude + Longitude, 
+            fluDataFinal[
+                fluDataFinal$Date >= as.Date(input$dateVal[1], format = "%Y-%m-%d") &
+                fluDataFinal$Date <= as.Date(input$dateVal[2], format = "%Y-%m-%d"),   
+            ], 
+        sum),
         lat = ~Latitude,
         lng = ~Longitude,
-        radius = ~ Incidents * 50,
+        radius = ~ Incidents * 10,
         color = 'red',
         popup = ~ as.character(paste0(
           County,
@@ -51,42 +57,76 @@ server <- function(input, output, session) {
       ) %>%
     
     addCircles(
-      data = fluData[
-        fluData$Season == input$seasonVal &
-        fluData$Week == input$weekVal,
-      ],
+      data = aggregate(. ~ County + Latitude + Longitude, 
+        fluDataFinal[
+              fluDataFinal$Date >= as.Date(input$dateVal[1], format = "%Y-%m-%d") &
+              fluDataFinal$Date <= as.Date(input$dateVal[2], format = "%Y-%m-%d"),   
+        ], 
+        sum),
       lat = ~Latitude,
       lng = ~Longitude,
-      radius = ~ Predicted * 50,
+      radius = ~ ARIMA * 10,
       color = 'blue',
       popup = ~ as.character(paste0(
         County,
         " County: ",
-        Predicted,
-        " Predicted Flu Cases"
+        ARIMA,
+        " Predicted Flu Cases (ARIMA)"
       )),
       label = ~ as.character(paste0(
         County,
         " County: ",
-        Predicted, 
-        " Predicted Flu Cases"
+        ARIMA, 
+        " Predicted Flu Cases (ARIMA)"
       ))
-    )
+    ) %>%
+      addCircles(
+        data = aggregate(. ~ County + Latitude + Longitude, 
+                         fluDataFinal[
+                           fluDataFinal$Date >= as.Date(input$dateVal[1], format = "%Y-%m-%d") &
+                             fluDataFinal$Date <= as.Date(input$dateVal[2], format = "%Y-%m-%d"),   
+                           ], 
+                         sum),
+        lat = ~Latitude,
+        lng = ~Longitude,
+        radius = ~ HW * 10,
+        color = 'green',
+        popup = ~ as.character(paste0(
+          County,
+          " County: ",
+          HW,
+          " Predicted Flu Cases (Holt-Winters)"
+        )),
+        label = ~ as.character(paste0(
+          County,
+          " County: ",
+          HW, 
+          " Predicted Flu Cases (Holt-Winters)"
+        ))
+      )
   })
 
   # Define table to include consolidated dataset
-  output$incTable <- DT::renderDataTable(fluData)
+  output$incTable <- DT::renderDataTable(fluDataFinal)
   
   output$predCenter <- renderPlot({
-    ts.plot(ts(fluData$Incidents[fluData$County==input$countyVal & fluData$Season=="2018-2019"], 
-               frequency = 52, start = c(2018, 40)), 
-            ts(fluData$Predicted[fluData$County==input$countyVal & fluData$Season=="2018-2019"], 
-               frequency = 52, start = c(2018, 40)), 
+    ts.plot(ts(fluDataFinal$Incidents[fluDataFinal$County==input$countyVal & fluDataFinal$Date >= as.Date("2018-10-06", format = "%Y-%m-%d")], 
+               frequency = 61, start = c(2018, 40)), 
+            ts(fluDataFinal$ARIMA[fluDataFinal$County==input$countyVal & fluDataFinal$Date >= as.Date("2018-10-06", format = "%Y-%m-%d")], 
+               frequency = 61, start = c(2018, 40)), 
+            ts(fluDataFinal$HW[fluDataFinal$County==input$countyVal & fluDataFinal$Date >= as.Date("2018-10-06", format = "%Y-%m-%d")], 
+               frequency = 61, start = c(2018, 40)), 
             gpars=list(xlab="Date", ylab="Flu Incidents", lty=c(1:3)))
   })
   
-  output$mse <- renderText({
-    mean(fluData$Error[fluData$County==input$countyVal & fluData$Season=="2018-2019"] ^ 2)
+  output$mseArima <- renderText({
+    mean(fluDataFinal$Error_ARIMA[fluDataFinal$County==input$countyVal & 
+                                    fluDataFinal$Date >= as.Date("2018-10-06", format = "%Y-%m-%d")] ^ 2)
+  })
+  
+  output$mseHW <- renderText({
+    mean(fluDataFinal$Error_HW[fluDataFinal$County==input$countyVal & 
+                                    fluDataFinal$Date >= as.Date("2018-10-06", format = "%Y-%m-%d")] ^ 2)
   })
 }
 

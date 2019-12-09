@@ -27,8 +27,18 @@ ui <- navbarPage("NYS Influenza Map",
       width = 330,
       height = "auto",
       h2("Data Variables"),
-      selectInput("seasonVal", "Season", unique(fluData$Season)),
-      selectInput("weekVal", "Week", head(unique(fluData$Week), -2))
+      #selectInput("seasonVal", "Season", unique(fluData$Season)),
+      #selectInput("weekVal", "Week", head(unique(fluData$Week), -2))
+      dateRangeInput("dateVal", "Date Range",
+                     min = min(as.Date(fluDataFinal$Date, format = "%Y-%m-%d")),
+                     max = max(as.Date(fluDataFinal$Date, format = "%Y-%m-%d")),
+                     start  = min(as.Date(fluDataFinal$Date, format = "%Y-%m-%d")),
+                     end = min(as.Date(fluDataFinal$Date, format = "%Y-%m-%d")) + 365,
+                     format = "mm/dd/yy",
+                     separator = " - "),
+      h4("Red = Actual Values"),
+      h4("Blue = ARIMA Est. Values"),
+      h4("Green = Holt-Winters Est. Values"),
     ),
   )),
 
@@ -44,12 +54,12 @@ ui <- navbarPage("NYS Influenza Map",
       top = "auto",
       left = "auto",
       right = 20,
-      bottom = 60,
+      bottom = 20,
       width = 330,
       height = "auto",
       h2("Data Variables"),
-      selectInput("countyVal", "County", unique(fluData$County)),
-      h4("Dashed line represents predicted flu cases over 33 observations")
+      selectInput("countyVal", "County", unique(fluDataFinal$County)),
+      h4("Dashed line represents ARIMA forecasted predictions. Dotted line represent Holt-Winters predictions.")
     ),
     
     absolutePanel(
@@ -60,11 +70,26 @@ ui <- navbarPage("NYS Influenza Map",
       top = "auto",
       left = 20,
       right = "auto",
-      bottom = 60,
-      width = 330,
+      bottom = 20,
+      width = 300,
       height = "auto",
-      h2("Mean Squared Error"),
-      textOutput("mse")
+      h2("Mean Squared Error (ARIMA)"),
+      textOutput("mseArima")
+    ),
+    
+    absolutePanel(
+      id = "controls",
+      class = "panel panel-default",
+      fixed = TRUE,
+      draggable = TRUE,
+      top = "auto",
+      left = 320,
+      right = "auto",
+      bottom = 20,
+      width = 300,
+      height = "auto",
+      h2("Mean Squared Error (Holt-Winters)"),
+      textOutput("mseHW")
     ),
     
     plotOutput("predCenter", click = "plot_click")
